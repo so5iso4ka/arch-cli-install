@@ -94,7 +94,7 @@ disks() {
 
 strap() {
     reflector --latest 200 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
-    pacstrap $DIR base base-devel binutils
+    pacstrap $DIR base base-devel binutils $EDITOR
     genfstab -U $DIR >> $DIR/etc/fstab
     cat "en_US.UTF-8 UTF-8" >> $DIR/etc/locale.gen
     cat "LANG=en_US.UTF-8 UTF-8" >> $DIR/etc/locale.conf
