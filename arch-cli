@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+
+checks() {
+    if ! [[ $(id -u) == 0 ]]; then
+        echo "Run me as a root."
+        exit 1
+    fi
+}
+
+error() {
+    echo "Provide actual answer!"
+    exit 1
+}
+
+sets() {
+    export DISK="/dev/sda"
+    export DIR="/mnt"
+    export SWP="y"
+    export FS="ext4"
+    export SWPGB="8GB"
+    export HOSTNAME="archlinux"
+    export EDITOR="vim"
+    export USERNAME="arch"
+    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option. Override? (y/n): " DFLTS 
+}
+
+execute() {
+    case $DFLTS in
+        y | yes | YES | Yes)
+            disks
+            strap
+        ;;
+        n | no | NO | No)
+            reads
+            disks
+            strap
+        ;;
+        *)
+            error
+        ;;
+    esac
+}
+
+reads() {
+    read -p "Enter device name as listed in lsblk (eg. /dev/sda): " DISK
+    read -p "Enter new root directory (eg. /mnt): " DIR
+    read -p "Enter file system for root (eg. ext4) " FS
+    read -p "Enter your prefered text editor (eg. vim)" EDITOR
+    read -p "Enter your username (eg. arch)" USERNAME
+    read -p "Enter your hostname (eg. archlinux)" EDITOR
+    read -p "Use swap? (y/n): " SWP
+    read -p "If yes, how much? (1-1024)" SWPGB
+}
+
+party() {
+    parted $DISK -- mklabel gpt
+    parted $DISK -- mkpart ESP fat32 1MB 1GB
+    parted $DISK -- set 3 esp on
+}
+
+connect() {
+    mount /dev/disk/by-partlabel/root $DIR
+    mkdir $DIR/boot
+    mount /dev/disk/by-partlabel/ESP $DIR/boot
+}
+
+
+disks() {
+    echo "Disk $DISK parting via parted."
+    case $SWP in
+        y | yes | YES | Yes)
+            echo "Swap option is enabled, swap is $SWPGB and cannot be overrided in interactive mode!"
+            party
+            parted $DISK -- mkpart root $FS 1GB -$SWPGB
+            parted $DISK -- mkpart swap linux-swap $SWPGB 100%
+            echo "Mounting disks into $DIR with swap enabled."
+            connect
+            swapon /dev/disk/by-partlabel/swap
+        ;;
+        n | no | NO | No)
+            echo "Swap option is disabled."
+            party
+            parted $DISK -- mkpart root $FS 1GB -1GB
+            echo "Mounting disks into $DIR with swap disabled."
+            connect
+        ;;
+        *)
+            error
+        ;;
+    esac
+}
+
+
+
+strap() {
+    reflector --latest 200 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
+    pacstrap $DIR base base-devel binutils
+    genfstab -U $DIR >> $DIR/etc/fstab
+    cat "en_US.UTF-8 UTF-8" >> $DIR/etc/locale.gen
+    cat "LANG=en_US.UTF-8 UTF-8" >> $DIR/etc/locale.conf
+    cat > $DIR/etc/hosts << EOF
+####################
+127.0.0.1 localhost
+::1 localhost
+####################
+EOF
+    cat > $DIR/etc/sudoers << EOF
+#############################################
+root     ALL=(ALL:ALL)    SETENV: ALL
+%wheel  ALL=(ALL:ALL)    SETENV: ALL
+#############################################
+Defaults:root,%wheel env_keep+=TERMINFO_DIRS
+Defaults:root,%wheel env_keep+=TERMINFO
+#############################################
+EOF
+    cat $HOST >> $DIR/etc/hostname
+    sleep 5
+    arch-chroot $DIR /bin/bash << EOF
+pacman -Syyu linux linux-headers linux-firmware
+ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+useradd -m -U -G wheel username $USERNAME
+bootctl enable
+EOF
+}
+
+
+checks
+sets
+execute
