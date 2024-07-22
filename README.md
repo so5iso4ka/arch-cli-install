@@ -2,4 +2,4 @@
 
 i've tried to create smth useful and created this lmao.
 
-works only on `arch` family as you need pacman.conf and etc to use pacstrap.
+works only on `arch` family as you need `pacman.conf` and etc to use pacstrap.
