@@ -21,7 +21,8 @@ sets() {
     export HOSTNAME="archlinux"
     export EDITOR="vim"
     export USERNAME="arch"
-    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option, $USERNAME for user, $HOSTNAME is hostname, $EDITOR - system editor. Override? (y/n): " DFLTS 
+    export KERNEL="linux"
+    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option, $USERNAME for user, $HOSTNAME is hostname, $EDITOR - system editor, default kernel $KERNEL. Override? (y/n): " DFLTS 
 }
 
 execute() {
@@ -55,6 +56,7 @@ reads() {
     read -p "Enter your prefered text editor (eg. vim)" EDITOR
     read -p "Enter your username (eg. arch)" USERNAME
     read -p "Enter your hostname (eg. archlinux)" EDITOR
+    read -p "Enter linux kernel type to install. Remember - in Arch repo there is only linux, linux-hardened, linux-lts, linux-rt, linux-rt-lts and linux-zen! (eg. linux-lts)" KERNEL
     read -p "Use swap? (y/n): " SWP
     read -p "If yes, how much? (1-1024)GB. Rationally swap is 1/2 of your current RAM. " SWPGB
 }
@@ -123,9 +125,10 @@ EOF
     cat $HOST >> $DIR/etc/hostname
     sleep 5
     arch-chroot $DIR /bin/bash << EOF
-pacman -Syyu linux linux-headers linux-firmware
-useradd -m -U -G wheel username $USERNAME
+pacman -Syyu $KERNEL $KERNEL-headers linux-firmware
+useradd -m -U -G wheel $USERNAME
 bootctl enable
+exit
 EOF
 }
 
