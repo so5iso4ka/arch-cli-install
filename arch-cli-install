@@ -21,7 +21,7 @@ sets() {
     export HOSTNAME="archlinux"
     export EDITOR="vim"
     export USERNAME="arch"
-    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option. Override? (y/n): " DFLTS 
+    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option, $USERNAME for user, $HOSTNAME is hostname, $EDITOR - system editor. Override? (y/n): " DFLTS 
 }
 
 execute() {
@@ -42,14 +42,21 @@ execute() {
 }
 
 reads() {
-    read -p "Enter device name as listed in lsblk (eg. /dev/sda): " DISK
+    lsblk
+    echo ""
+    read -p "Enter device name as listed in lsblk above (eg. /dev/sda): " DISK
+    clear
     read -p "Enter new root directory (eg. /mnt): " DIR
+    clear
+    cat /proc/filesystems
+    echo ""
     read -p "Enter file system for root (eg. ext4) " FS
+    clear
     read -p "Enter your prefered text editor (eg. vim)" EDITOR
     read -p "Enter your username (eg. arch)" USERNAME
     read -p "Enter your hostname (eg. archlinux)" EDITOR
     read -p "Use swap? (y/n): " SWP
-    read -p "If yes, how much? (1-1024)" SWPGB
+    read -p "If yes, how much? (1-1024)GB. Rationally swap is 1/2 of your current RAM. " SWPGB
 }
 
 party() {
@@ -117,7 +124,6 @@ EOF
     sleep 5
     arch-chroot $DIR /bin/bash << EOF
 pacman -Syyu linux linux-headers linux-firmware
-ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 useradd -m -U -G wheel username $USERNAME
 bootctl enable
 EOF
