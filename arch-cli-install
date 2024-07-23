@@ -58,7 +58,6 @@ reads() {
     read -p "Enter your hostname (eg. archlinux)" EDITOR
     read -p "Enter linux kernel type to install. Remember - in Arch repo there is only linux, linux-hardened, linux-lts, linux-rt, linux-rt-lts and linux-zen! (eg. linux-lts)" KERNEL
     read -p "Use swap? (y/n): " SWP
-    read -p "If yes, how much? (1-1024)GB. Rationally swap is 1/2 of your current RAM. " SWPGB
 }
 
 party() {
@@ -69,7 +68,7 @@ party() {
 
 connect() {
     mount /dev/disk/by-partlabel/root $DIR
-    mkdir $DIR/boot
+    mkdir -p $DIR/boot
     mount /dev/disk/by-partlabel/ESP $DIR/boot
 }
 
@@ -78,7 +77,8 @@ disks() {
     echo "Disk $DISK parting via parted."
     case $SWP in
         y | yes | YES | Yes)
-            echo "Swap option is enabled, swap is $SWPGB and cannot be overrided in interactive mode!"
+            read -p "Enter how much GB swap will be. Rationally swap is 1/2 of your current RAM. " SWPGB
+            echo "Swap option is enabled, swap is $SWPGB GB!"
             party
             parted $DISK -- mkpart root $FS 1GB -$SWPGB
             parted $DISK -- mkpart swap linux-swap $SWPGB 100%
