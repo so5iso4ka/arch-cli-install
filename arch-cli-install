@@ -67,7 +67,7 @@ party() {
 }
 
 connect() {
-    mkfs.ext4 /dev/disk/by-partlabel/root
+    mkfs.$FS /dev/disk/by-partlabel/root
     mount /dev/disk/by-partlabel/root $DIR
     mkdir -p $DIR/boot
     mount /dev/disk/by-partlabel/ESP $DIR/boot
