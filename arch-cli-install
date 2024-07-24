@@ -28,11 +28,11 @@ sets() {
 execute() {
     case $DFLTS in
         y | yes | YES | Yes)
+            reads
             disks
             strap
         ;;
         n | no | NO | No)
-            reads
             disks
             strap
         ;;
