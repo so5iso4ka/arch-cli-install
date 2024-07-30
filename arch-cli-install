@@ -67,7 +67,7 @@ party() {
 }
 
 connect() {
-    mkfs.$FS /dev/disk/by-partlabel/root
+    mkfs.ext4 /dev/disk/by-partlabel/root
     mount /dev/disk/by-partlabel/root $DIR
     mkdir -p $DIR/boot
     mount /dev/disk/by-partlabel/ESP $DIR/boot
@@ -105,6 +105,7 @@ disks() {
 
 
 strap() {
+    ROOTUUID=$(lsblk -no UUID /dev/disk/by-partlabel/root)
     reflector --latest 20 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
     pacstrap $DIR base base-devel binutils $EDITOR
     genfstab -U $DIR >> $DIR/etc/fstab
@@ -131,8 +132,14 @@ EOF
 locale-gen
 pacman -Syyu --noconfirm $KERNEL $KERNEL-headers linux-firmware
 useradd -m -U -G wheel $USERNAME
-bootctl enable
+bootctl install
 exit
+EOF
+    cat > $DIR/boot/loader/entries/arch.conf << EOF
+title Arch Linux
+linux /vmlinuz-$KERNEL
+initrd /initramfs-$KERNEL.img
+options root=UUID=$ROOTUUID rw
 EOF
 }
 
