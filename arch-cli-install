@@ -106,8 +106,7 @@ disks() {
 
 strap() {
     ROOTUUID=$(lsblk -no UUID /dev/disk/by-partlabel/root)
-    reflector --latest 20 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
-    pacstrap $DIR base base-devel binutils $EDITOR
+    pacstrap -K $DIR base base-devel binutils $EDITOR
     genfstab -U $DIR >> $DIR/etc/fstab
     echo "en_US.UTF-8 UTF-8" >> $DIR/etc/locale.gen
     echo "LANG=en_US.UTF-8 UTF-8" >> $DIR/etc/locale.conf
