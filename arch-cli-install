@@ -21,8 +21,10 @@ sets() {
     export HOSTNAME="archlinux"
     export EDITOR="vim"
     export USERNAME="arch"
+    export USERPASSWORD="arch"
+    export ROOTPASSWORD="root"
     export KERNEL="linux"
-    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option, $USERNAME for user, $HOSTNAME is hostname, $EDITOR - system editor, default kernel $KERNEL. Override? (y/n): " DFLTS 
+    read -p "The defaults is disk $DISK, new root $DIR and $FS it's fs, $SWP to swap option, $USERNAME for user, $USERPASSWORD for user password, $ROOTPASSWORD for root password, $HOSTNAME is hostname, $EDITOR - system editor, default kernel $KERNEL. Override? (y/n): " DFLTS
 }
 
 execute() {
@@ -55,6 +57,8 @@ reads() {
     clear
     read -p "Enter your prefered text editor (eg. vim): " EDITOR
     read -p "Enter your username (eg. arch): " USERNAME
+    read -p "Enter password for user: " USERPASSWORD
+    read -p "Enter password for root: " ROOTPASSWORD
     read -p "Enter your hostname (eg. archlinux): " HOST
     read -p "Enter linux kernel type to install. Remember - in Arch repo there is only linux, linux-hardened, linux-lts, linux-rt, linux-rt-lts and linux-zen! (eg. linux-lts): " KERNEL
     read -p "Use swap? (y/n): " SWP
@@ -106,10 +110,11 @@ disks() {
 
 strap() {
     ROOTUUID=$(lsblk -no UUID /dev/disk/by-partlabel/root)
-    pacstrap -K $DIR base base-devel binutils $EDITOR
+    reflector --latest 20 --protocol http,https --sort rate --save /etc/pacman.d/mirrorlist
+    pacstrap $DIR base base-devel binutils $EDITOR
     genfstab -U $DIR >> $DIR/etc/fstab
     echo "en_US.UTF-8 UTF-8" >> $DIR/etc/locale.gen
-    echo "LANG=en_US.UTF-8 UTF-8" >> $DIR/etc/locale.conf
+    echo "LANG=en_US.UTF-8" >> $DIR/etc/locale.conf
     cat > $DIR/etc/hosts << EOF
 ####################
 127.0.0.1 localhost
@@ -131,6 +136,8 @@ EOF
 locale-gen
 pacman -Syyu --noconfirm $KERNEL $KERNEL-headers linux-firmware
 useradd -m -U -G wheel $USERNAME
+echo $ROOTPASSWORD | passwd -s
+echo $USERPASSWORD | passwd -s $USER
 bootctl install
 exit
 EOF
